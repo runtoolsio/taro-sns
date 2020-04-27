@@ -1,9 +1,9 @@
 import logging
-import boto3
-
 import textwrap
 
-from taro import ExecutionState, ExecutionStateObserver, JobInstance
+import boto3
+
+from taro import ExecutionState, ExecutionStateObserver, JobInfo
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ def _create_error_parameters(exec_error):
 
 class SnsNotification(ExecutionStateObserver):
 
-    def state_update(self, job: JobInstance):
+    def state_update(self, job: JobInfo):
         topic_arn = 'arn:aws:sns:eu-west-1:136604387399:my_topic'
         states = job.lifecycle.states()
         prev_state = states[-2] if len(states) > 1 else ExecutionState.NONE

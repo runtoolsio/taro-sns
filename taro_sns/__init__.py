@@ -2,13 +2,11 @@
 This top-level module represents a taro plugin for SNS notification.
 Each plugin module name must start with 'taro_' prefix.
 """
+from taro import PluginBase, JobControl
 from taro_sns.notification import SnsNotification
 
 
-def create_execution_listener():
-    """
-    This method is called by the plugin framework
+class SnsPlugin(PluginBase):
 
-    :return: A listener sending SNS notification on execution state changes
-    """
-    return SnsNotification()
+    def new_job_instance(self, job_instance: JobControl):
+        job_instance.add_observer(SnsNotification())
