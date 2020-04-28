@@ -52,6 +52,9 @@ def _create_error_parameters(exec_error):
 
 class SnsNotification(ExecutionStateObserver):
 
+    def __init__(self, rules):
+        self.rules = rules
+
     def state_update(self, job: JobInfo):
         topic_arn = 'arn:aws:sns:eu-west-1:136604387399:my_topic'
         states = job.lifecycle.states()
