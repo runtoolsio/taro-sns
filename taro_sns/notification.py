@@ -10,12 +10,10 @@ log = logging.getLogger(__name__)
 client = boto3.client("sns")
 
 
-def notify(topic, subject, message):
-    if not topic:
-        return
-
-    client.publish(TopicArn=topic, Subject=subject, Message=message)
-    log.debug("event=[sns_notified] topic=[{}] subject=[{}]".format(topic, subject))
+def notify(topics, subject, message):
+    for topic in topics:
+        client.publish(TopicArn=topic, Subject=subject, Message=message)
+        log.debug("event=[sns_notified] topic=[{}] subject=[{}]".format(topic, subject))
 
 
 def _generate(*sections):
@@ -52,11 +50,15 @@ def _create_error_parameters(exec_error):
 
 class SnsNotification(ExecutionStateObserver):
 
-    def __init__(self, rules):
-        self.rules = rules
+    def __init__(self, topics_provider):
+        self.topics_provider = topics_provider
 
     def state_update(self, job: JobInfo):
-        topic_arn = 'arn:aws:sns:eu-west-1:136604387399:my_topic'
+        # topic_arn = 'arn:aws:sns:eu-west-1:136604387399:my_topic'
+        topics = self.topics_provider(job)
+        if not topics:
+            return
+
         states = job.lifecycle.states()
         prev_state = states[-2] if len(states) > 1 else ExecutionState.NONE
         cur_state = states[-1]
@@ -67,6 +69,6 @@ class SnsNotification(ExecutionStateObserver):
         if cur_state.is_failure():
             exec_error = job.exec_error
             message = _generate(job_section, _create_error_section(exec_error), _create_error_parameters(exec_error))
-            notify(topic_arn, subject, message)
+            notify(topics, subject, message)
         else:
-            notify(topic_arn, subject, job_section)
+            notify(topics, subject, job_section)
