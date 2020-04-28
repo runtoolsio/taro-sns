@@ -7,6 +7,8 @@ import logging
 import taro
 from taro import PluginBase, PluginDisabledError, JobControl
 
+log = logging.getLogger(__name__)
+
 RULES_FILE = 'taro_sns_rules.yaml'
 
 
@@ -17,8 +19,9 @@ def validate_rules(config):
     if len(rules) == 0:
         raise ValueError('No notification rules defined in rules file ' + RULES_FILE)
     for rule in rules:
-        if not isinstance(rule.when, str):
-            raise ValueError("When condition is not 'str'")
+        if hasattr(rule, 'when'):
+            if not isinstance(rule.when, str):
+                raise ValueError("When condition is not 'str'")
         if not isinstance(rule.notify, str):
             for topic in rule.notify:
                 if not isinstance(topic, str):
@@ -28,6 +31,8 @@ def validate_rules(config):
 def create_topics_provider(rules):
     import yaql
     from yaql import yaqlization
+    from yaql.language.exceptions import YaqlParsingException
+
     engine = yaql.factory.YaqlFactory().create()
 
     def create_topics(job):
@@ -38,13 +43,14 @@ def create_topics_provider(rules):
         ctx['job'] = job
 
         for rule in rules:
-            exp = engine(rule.when)
-            res = exp.evaluate(context=ctx)
-            if res is True:
-                if isinstance(rule.notify, str):
-                    topics.append(rule.notify)
-                else:
-                    topics += rule.notify
+            try:
+                if not hasattr(rule, 'when') or engine(rule.when).evaluate(context=ctx) is True:
+                    if isinstance(rule.notify, str):
+                        topics.append(rule.notify)
+                    else:
+                        topics += rule.notify  # List expected
+            except YaqlParsingException as e:
+                log.warning('event=[sns_rule_condition_invalid] condition=[%s] detail=[%s]', rule.when, e)
 
         return topics
 
