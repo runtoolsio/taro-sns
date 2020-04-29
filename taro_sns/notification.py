@@ -29,7 +29,13 @@ def _create_job_section(job):
     {header}
     Job: {job.job_id}
     Instance: {job.instance_id}
-    """.format(header=_header("Job Detail"), job=job)
+    Executed: {executed}
+    State: {job.state.name}
+    Changed: {last_changed}
+    """.format(header=_header("Job Detail"),
+               job=job,
+               executed=job.lifecycle.execution_started() or 'N/A',
+               last_changed=job.lifecycle.last_changed())
 
 
 def _create_error_section(exec_error):
@@ -45,7 +51,7 @@ def _create_error_parameters(exec_error):
     if exec_error.params:
         return header + "\n" + "\n".join("{}: {}".format(k, v) for k, v in exec_error.params.items())
     else:
-        return header + "none"
+        return header + "\nnone"
 
 
 class SnsNotification(ExecutionStateObserver):
@@ -54,7 +60,6 @@ class SnsNotification(ExecutionStateObserver):
         self.topics_provider = topics_provider
 
     def state_update(self, job: JobInfo):
-        # topic_arn = 'arn:aws:sns:eu-west-1:136604387399:my_topic'
         topics = self.topics_provider(job)
         if not topics:
             return
