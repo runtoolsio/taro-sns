@@ -4,57 +4,27 @@ Each plugin module name must start with 'taro_' prefix.
 """
 import logging
 
+from taro_sns import rules
 import taro
 from taro import PluginBase, PluginDisabledError, JobControl
-
-log = logging.getLogger(__name__)
 
 RULES_FILE = 'taro_sns_rules.yaml'
 
 
-def validate_rules(config):
-    if not config:
-        raise ValueError('Empty rules file ' + RULES_FILE)
-    rules = config.rules
-    if len(rules) == 0:
-        raise ValueError('No notification rules defined in rules file ' + RULES_FILE)
-    for rule in rules:
-        if hasattr(rule, 'when'):
-            if not isinstance(rule.when, str):
-                raise ValueError("When condition is not 'str'")
-        if not isinstance(rule.notify, str):
-            for topic in rule.notify:
-                if not isinstance(topic, str):
-                    raise ValueError("Notify array containing non-'str' value")
+def read_validate_rules():
+    try:
+        rules_path = taro.lookup_config_file_path(RULES_FILE)
+    except FileNotFoundError as e:
+        raise PluginDisabledError('Rules file lookup failed -> ' + str(e)) from e
+    rules_config = taro.read_config(rules_path)
+    if not rules_config or not hasattr(rules_config, 'rules'):
+        raise PluginDisabledError('Rules file is empty')
+    try:
+        rules.validate_rules(rules_config.rules)
+    except Exception as e:
+        raise PluginDisabledError('Invalid rules file -> ' + str(e)) from e
 
-
-def create_topics_provider(rules):
-    import yaql
-    from yaql import yaqlization
-    from yaql.language.exceptions import YaqlParsingException
-
-    engine = yaql.factory.YaqlFactory().create()
-
-    def create_topics(job):
-        topics = []
-
-        yaqlization.yaqlize(job)
-        ctx = yaql.create_context()
-        ctx['job'] = job
-
-        for rule in rules:
-            try:
-                if not hasattr(rule, 'when') or engine(rule.when).evaluate(context=ctx) is True:
-                    if isinstance(rule.notify, str):
-                        topics.append(rule.notify)
-                    else:
-                        topics += rule.notify  # List expected
-            except YaqlParsingException as e:
-                log.warning('event=[sns_rule_condition_invalid] condition=[%s] detail=[%s]', rule.when, e)
-
-        return topics
-
-    return create_topics
+    return rules_config.rules
 
 
 def disable_boto3_logging():
@@ -67,21 +37,11 @@ def disable_boto3_logging():
 class SnsPlugin(PluginBase):
 
     def __init__(self):
-        try:
-            rules_path = taro.lookup_config_file_path(RULES_FILE)
-        except FileNotFoundError as e:
-            raise PluginDisabledError('Rules file lookup failed -> ' + str(e)) from e
-        rules = taro.read_config(rules_path)
-        try:
-            validate_rules(rules)
-        except Exception as e:
-            raise PluginDisabledError('Invalid rules file -> ' + str(e)) from e
-
         disable_boto3_logging()
         # Import 'notification' package no sooner than boto3 logging is disabled to prevent boto3 init logs
         # Import 'notification' package only when validation is successful to prevent unnecessary boto3 import
         from taro_sns.notification import SnsNotification
-        self.sns_notification = SnsNotification(create_topics_provider(rules.rules))
+        self.sns_notification = SnsNotification(rules.create_topics_provider(read_validate_rules()))
 
     def new_job_instance(self, job_instance: JobControl):
         self.sns_notification.state_update(job_instance.create_info())  # Notify job created
