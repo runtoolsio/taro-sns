@@ -1,7 +1,6 @@
 import logging
 
 import yaql
-from yaql import yaqlization
 from yaql.language.exceptions import YaqlException
 
 log = logging.getLogger(__name__)
@@ -26,9 +25,9 @@ def create_topics_provider(rules):
     def create_topics(job):
         topics = []
 
-        yaqlization.yaqlize(job)
-        ctx = yaql.create_context()
-        ctx['job'] = job
+        # from yaql import yaqlization
+        # yaqlization.yaqlize(job)
+        ctx = _create_yaql_ctx(job)
 
         for rule in rules:
             try:
@@ -43,3 +42,13 @@ def create_topics_provider(rules):
         return topics
 
     return create_topics
+
+
+def _create_yaql_ctx(job):
+    ctx = yaql.create_context()
+    ctx['job_id'] = job.job_id
+    ctx['state'] = job.state.name
+    ctx['failure'] = job.state.is_failure()
+    ctx['state_groups'] = [group.name for group in job.state.groups]
+
+    return ctx
