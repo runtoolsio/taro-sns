@@ -21,17 +21,17 @@ def _generate(*sections):
 
 
 def _header(header_text):
-    return (" " + header_text + " ").center(60, "*")
+    return header_text + "\n" + "-" * len(header_text)
 
 
 def _create_job_section(job):
     return """\
     {header}
-    Job: {job.job_id}
-    Instance: {job.instance_id}
-    Executed: {executed}
-    State: {job.state.name}
-    Changed: {last_changed}
+      Job: {job.job_id}
+      Instance: {job.instance_id}
+      Executed: {executed}
+      State: {job.state.name}
+      Changed: {last_changed}
     """.format(header=_header("Job Detail"),
                job=job,
                executed=job.lifecycle.execution_started() or 'N/A',
@@ -39,19 +39,15 @@ def _create_job_section(job):
 
 
 def _create_error_section(exec_error):
+    if exec_error.params:
+        params = "\n    ".join("{}: {}".format(k, v) for k, v in exec_error.params.items())
+    else:
+        params = "none"
     return """\
     {header}
-    Reason: {error.message}
-    Occurrence Time: TODO From job context?
-    """.format(header=_header("Error Detail"), error=exec_error)
-
-
-def _create_error_parameters(exec_error):
-    header = _header("Error Parameters")
-    if exec_error.params:
-        return header + "\n" + "\n".join("{}: {}".format(k, v) for k, v in exec_error.params.items())
-    else:
-        return header + "\nnone"
+      Reason: {error.message}
+      Params: {parameters}
+    """.format(header=_header("Error Detail"), error=exec_error, parameters=params)
 
 
 class SnsNotification(ExecutionStateObserver):
@@ -73,7 +69,7 @@ class SnsNotification(ExecutionStateObserver):
 
         if cur_state.is_failure():
             exec_error = job.exec_error
-            message = _generate(job_section, _create_error_section(exec_error), _create_error_parameters(exec_error))
+            message = _generate(job_section, _create_error_section(exec_error))
             notify(topics, subject, message)
         else:
             notify(topics, subject, job_section)
