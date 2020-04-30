@@ -17,7 +17,7 @@ def notify(topics, subject, message):
 
 
 def _generate(*sections):
-    return "\n".join((textwrap.dedent(section) for section in sections))
+    return "\n\n".join((textwrap.dedent(section) for section in sections))
 
 
 def _header(header_text):
@@ -28,9 +28,9 @@ def _create_job_section(job: JobInfo):
     s = _header("Job Detail")
     s += "\nJob: " + job.job_id
     s += "\nInstance: " + job.instance_id
-    s += "\nExecuted: " + job.lifecycle.execution_started()
-    s += "\nState: " + job.state
-    s += "\nChanged: " + job.lifecycle.last_changed()
+    s += "\nExecuted: " + str(job.lifecycle.execution_started())
+    s += "\nState: " + job.state.name
+    s += "\nChanged: " + str(job.lifecycle.last_changed())
     return s
 
 
