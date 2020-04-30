@@ -3,6 +3,7 @@ import textwrap
 
 import boto3
 
+import taro
 from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError
 
 log = logging.getLogger(__name__)
@@ -31,6 +32,8 @@ def _create_job_section(job: JobInfo):
     s += "\nExecuted: " + str(job.lifecycle.execution_started())
     s += "\nState: " + job.state.name
     s += "\nChanged: " + str(job.lifecycle.last_changed())
+    if job.state.is_terminal():
+        s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time())
     return s
 
 
