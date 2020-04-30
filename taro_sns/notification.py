@@ -3,7 +3,7 @@ import textwrap
 
 import boto3
 
-from taro import ExecutionState, ExecutionStateObserver, JobInfo
+from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError
 
 log = logging.getLogger(__name__)
 
@@ -24,30 +24,27 @@ def _header(header_text):
     return header_text + "\n" + "-" * len(header_text)
 
 
-def _create_job_section(job):
-    return """\
-    {header}
-      Job: {job.job_id}
-      Instance: {job.instance_id}
-      Executed: {executed}
-      State: {job.state.name}
-      Changed: {last_changed}
-    """.format(header=_header("Job Detail"),
-               job=job,
-               executed=job.lifecycle.execution_started() or 'N/A',
-               last_changed=job.lifecycle.last_changed())
+def _create_job_section(job: JobInfo):
+    s = _header("Job Detail")
+    s += "\nJob: " + job.job_id
+    s += "\nInstance: " + job.instance_id
+    s += "\nExecuted: " + job.lifecycle.execution_started()
+    s += "\nState: " + job.state
+    s += "\nChanged: " + job.lifecycle.last_changed()
+    return s
 
 
-def _create_error_section(exec_error):
+def _create_error_section(job: JobInfo, exec_error: ExecutionError):
+    s = _header("Error Detail")
+    s += "\nReason: " + str(exec_error)
+    if job.status:
+        s += "\nMessage: " + job.status
     if exec_error.params:
-        params = "\n    ".join("{}: {}".format(k, v) for k, v in exec_error.params.items())
+        s += "\nParams:" + "\n  ".join("{}: {}".format(k, v) for k, v in exec_error.params.items())
     else:
-        params = "none"
-    return """\
-    {header}
-      Reason: {error.message}
-      Params: {parameters}
-    """.format(header=_header("Error Detail"), error=exec_error, parameters=params)
+        s += "\nParams: (none)"
+
+    return s
 
 
 class SnsNotification(ExecutionStateObserver):
@@ -69,7 +66,7 @@ class SnsNotification(ExecutionStateObserver):
 
         if cur_state.is_failure():
             exec_error = job.exec_error
-            message = _generate(job_section, _create_error_section(exec_error))
+            message = _generate(job_section, _create_error_section(job, exec_error))
             notify(topics, subject, message)
         else:
             notify(topics, subject, job_section)
