@@ -44,5 +44,5 @@ class SnsPlugin(PluginBase):
         self.sns_notification = SnsNotification(rules.create_topics_provider(read_validate_rules()))
 
     def new_job_instance(self, job_instance: JobControl):
-        self.sns_notification.state_update(job_instance.create_info())  # Notify job created
+        # self.sns_notification.state_update(job_instance.create_info())  # Notify job created
         job_instance.add_observer(self.sns_notification)

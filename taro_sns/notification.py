@@ -4,7 +4,7 @@ import textwrap
 import boto3
 
 import taro
-from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError
+from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, HostinfoError
 
 log = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ def notify(topics, subject, message):
 
 
 def _generate(*sections):
-    return "\n\n".join((textwrap.dedent(section) for section in sections))
+    return "\n\n".join((textwrap.dedent(section) for section in sections if section))
 
 
 def _header(header_text):
@@ -37,6 +37,15 @@ def _create_job_section(job: JobInfo):
     return s
 
 
+def _create_hostinfo_section(host_info):
+    if not host_info:
+        return ''
+    s = _header("Host Info")
+    for name, value in host_info.items():
+        s += f"\n{name}: {value}"
+    return s
+
+
 def _create_error_section(job: JobInfo, exec_error: ExecutionError):
     s = _header("Error Detail")
     s += "\nReason: " + str(exec_error)
@@ -52,8 +61,9 @@ def _create_error_section(job: JobInfo, exec_error: ExecutionError):
 
 class SnsNotification(ExecutionStateObserver):
 
-    def __init__(self, topics_provider):
+    def __init__(self, topics_provider, hostinfo):
         self.topics_provider = topics_provider
+        self.hostinfo = hostinfo
 
     def state_update(self, job: JobInfo):
         topics = self.topics_provider(job)
@@ -65,11 +75,9 @@ class SnsNotification(ExecutionStateObserver):
         cur_state = states[-1]
 
         subject = "Job {} changed state from {} to {}".format(job.job_id, prev_state.name, cur_state.name)
-        job_section = _create_job_section(job)
+        sections = [_create_job_section(job), _create_hostinfo_section(self.host_info)]
 
         if cur_state.is_failure():
-            exec_error = job.exec_error
-            message = _generate(job_section, _create_error_section(job, exec_error))
-            notify(topics, subject, message)
-        else:
-            notify(topics, subject, job_section)
+            sections.append(_create_error_section(job, job.exec_error))
+
+        notify(topics, subject, _generate(sections))
