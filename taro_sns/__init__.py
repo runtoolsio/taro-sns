@@ -6,9 +6,11 @@ import logging
 
 from taro_sns import rules
 import taro
-from taro import PluginBase, PluginDisabledError, JobControl
+from taro import PluginBase, PluginDisabledError, JobControl, HostinfoError
 
 RULES_FILE = 'taro_sns_rules.yaml'
+
+log = logging.getLogger(__name__)
 
 
 def read_validate_rules():
@@ -38,10 +40,15 @@ class SnsPlugin(PluginBase):
 
     def __init__(self):
         disable_boto3_logging()
+        try:
+            host_info = taro.read_hostinfo()
+        except HostinfoError:
+            log.exception('event=[hostinfo_error]')
+            host_info = {}
         # Import 'notification' package no sooner than boto3 logging is disabled to prevent boto3 init logs
         # Import 'notification' package only when validation is successful to prevent unnecessary boto3 import
         from taro_sns.notification import SnsNotification
-        self.sns_notification = SnsNotification(rules.create_topics_provider(read_validate_rules()))
+        self.sns_notification = SnsNotification(rules.create_topics_provider(read_validate_rules()), host_info)
 
     def new_job_instance(self, job_instance: JobControl):
         # self.sns_notification.state_update(job_instance.create_info())  # Notify job created

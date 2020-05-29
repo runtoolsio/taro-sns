@@ -4,7 +4,7 @@ import textwrap
 import boto3
 
 import taro
-from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, HostinfoError
+from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError
 
 log = logging.getLogger(__name__)
 
@@ -75,9 +75,9 @@ class SnsNotification(ExecutionStateObserver):
         cur_state = states[-1]
 
         subject = "Job {} changed state from {} to {}".format(job.job_id, prev_state.name, cur_state.name)
-        sections = [_create_job_section(job), _create_hostinfo_section(self.host_info)]
+        sections = [_create_job_section(job), _create_hostinfo_section(self.hostinfo)]
 
         if cur_state.is_failure():
             sections.append(_create_error_section(job, job.exec_error))
 
-        notify(topics, subject, _generate(sections))
+        notify(topics, subject, _generate(*sections))
