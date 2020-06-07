@@ -52,4 +52,4 @@ class SnsPlugin(PluginBase):
 
     def new_job_instance(self, job_instance: JobControl):
         # self.sns_notification.state_update(job_instance.create_info())  # Notify job created
-        job_instance.add_observer(self.sns_notification)
+        job_instance.add_state_observer(self.sns_notification)
