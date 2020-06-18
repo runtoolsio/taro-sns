@@ -34,6 +34,8 @@ def _create_job_section(job: JobInfo, *, always_exec_time: bool):
     s += "\nState changed: " + str(job.lifecycle.last_changed())
     if job.state.is_terminal() or always_exec_time:
         s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time())
+    if job.warnings:
+        s += "\nWarnings: " + ",".join((w.id for w in job.warnings))
     return s
 
 
@@ -78,6 +80,8 @@ class SnsNotification(ExecutionStateObserver, JobWarningObserver):
         subject = "Job {} changed state from {} to {}".format(job.job_id, prev_state.name, cur_state.name)
         sections = [_create_job_section(job, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
 
+        if job.warnings:
+            subject += " with warnings!"
         if cur_state.is_failure():
             sections.append(_create_error_section(job, job.exec_error))
 
