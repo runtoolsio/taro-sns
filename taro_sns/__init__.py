@@ -6,27 +6,28 @@ import logging
 
 from taro_sns import rules
 import taro
-from taro import PluginBase, PluginDisabledError, JobControl, HostinfoError
+from taro import PluginBase, PluginDisabledError, JobControl, HostinfoError, NestedNamespace
 
 RULES_FILE = 'taro_sns_rules.yaml'
 
 log = logging.getLogger(__name__)
 
 
-def read_validate_rules():
+def read_validate_rules() -> NestedNamespace:
     try:
         rules_path = taro.lookup_config_file_path(RULES_FILE)
     except FileNotFoundError as e:
         raise PluginDisabledError('Rules file lookup failed -> ' + str(e)) from e
     rules_config = taro.read_config(rules_path)
-    if not rules_config or not hasattr(rules_config, 'rules'):
-        raise PluginDisabledError('Rules file is empty')
+    if not rules_config or (not hasattr(rules_config, 'states') or not hasattr(rules_config, 'warnings')):
+        raise PluginDisabledError('Rules file must contain "states" and/or "warnings" sections')
     try:
-        rules.validate_rules(rules_config.rules)
+        rules.validate_rules(rules_config.get('states', ()))
+        rules.validate_rules(rules_config.get('warnings', ()))
     except Exception as e:
         raise PluginDisabledError('Invalid rules file -> ' + str(e)) from e
 
-    return rules_config.rules
+    return rules_config
 
 
 def disable_boto3_logging():
@@ -48,8 +49,14 @@ class SnsPlugin(PluginBase):
         # Import 'notification' package no sooner than boto3 logging is disabled to prevent boto3 init logs
         # Import 'notification' package only when validation is successful to prevent unnecessary boto3 import
         from taro_sns.notification import SnsNotification
-        self.sns_notification = SnsNotification(rules.create_topics_provider(read_validate_rules()), host_info)
+        validated_rules = read_validate_rules()
+        self.sns_notification =\
+            SnsNotification(
+                rules.create_topics_provider_states(validated_rules.get('states')),
+                rules.create_topics_provider_warnings(validated_rules.get('warnings')),
+                host_info)
 
     def new_job_instance(self, job_instance: JobControl):
         # self.sns_notification.state_update(job_instance.create_info())  # Notify job created
         job_instance.add_state_observer(self.sns_notification)
+        job_instance.add_warning_observer(self.sns_notification)
