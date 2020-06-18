@@ -56,7 +56,9 @@ def _add_job_context(ctx, job):
 def _add_warning_context(ctx, warning, event: WarningEvent):
     ctx['warning_id'] = warning.id
     ctx['event'] = event.name
-    ctx['new_warning'] = event == WarningEvent.NEW_WARNING  # TODO etc.
+    ctx['new_warning'] = event == WarningEvent.NEW_WARNING
+    ctx['warning_updated'] = event == WarningEvent.WARNING_UPDATED
+    ctx['warning_removed'] = event == WarningEvent.WARNING_REMOVED
 
 
 def get_topics(rules, ctx):
