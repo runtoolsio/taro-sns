@@ -80,10 +80,11 @@ class SnsNotification(ExecutionStateObserver, JobWarningObserver):
         subject = "Job {} changed state from {} to {}".format(job.job_id, prev_state.name, cur_state.name)
         sections = [_create_job_section(job, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
 
-        if job.warnings:
-            subject += " with warnings!"
         if cur_state.is_failure():
             sections.append(_create_error_section(job, job.exec_error))
+            subject += "!"
+        if job.warnings:
+            subject += " with warnings!"
 
         notify(topics, subject, _generate(*sections))
 
