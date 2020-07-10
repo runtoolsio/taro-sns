@@ -97,8 +97,6 @@ class SnsNotification(ExecutionStateObserver, JobWarningObserver):
             subject = "!New warning {} for job {}!".format(warning.id, job.job_id)
         elif event == WarningEvent.WARNING_UPDATED:
             subject = "Warning {} updated for job {}".format(warning.id, job.job_id)
-        elif event == WarningEvent.WARNING_REMOVED:
-            subject = "Warning {} removed for job {}".format(warning.id, job.job_id)
         else:
             subject = "Unknown event for warning {} in job {} - Ask some dev to fix this".format(warning.id, job.job_id)
         sections = [_create_job_section(job, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
