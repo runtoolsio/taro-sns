@@ -4,7 +4,7 @@ import textwrap
 import boto3
 
 import taro
-from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, JobWarningObserver, Warn, WarningEvent
+from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn, WarningEvent
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def _create_error_section(job: JobInfo, exec_error: ExecutionError):
     return s
 
 
-class SnsNotification(ExecutionStateObserver, JobWarningObserver):
+class SnsNotification(ExecutionStateObserver, WarningObserver):
 
     def __init__(self, topics_provider_states, topics_provider_warnings, hostinfo):
         self.topics_provider_states = topics_provider_states
