@@ -4,7 +4,7 @@ import textwrap
 import boto3
 
 import taro
-from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn, WarningEvent
+from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn
 
 log = logging.getLogger(__name__)
 
@@ -88,17 +88,12 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
 
         notify(topics, subject, _generate(*sections))
 
-    def warning_update(self, job: JobInfo, warning: Warn, event: WarningEvent):
-        topics = self.topics_provider_warnings(job, warning, event)
+    def new_warning(self, job_info: JobInfo, warning: Warn):
+        topics = self.topics_provider_warnings(job_info, warning)
         if not topics:
             return
 
-        if event == WarningEvent.NEW_WARNING:
-            subject = "!New warning {} for job {}!".format(warning.id, job.job_id)
-        elif event == WarningEvent.WARNING_UPDATED:
-            subject = "Warning {} updated for job {}".format(warning.id, job.job_id)
-        else:
-            subject = "Unknown event for warning {} in job {} - Ask some dev to fix this".format(warning.id, job.job_id)
-        sections = [_create_job_section(job, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
+        subject = "!New warning {} for job instance {}@{}!".format(warning.id, job_info.job_id, job_info.instance_id)
+        sections = [_create_job_section(job_info, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
 
         notify(topics, subject, _generate(*sections))

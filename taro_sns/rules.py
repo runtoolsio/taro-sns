@@ -3,8 +3,6 @@ import logging
 import yaql
 from yaql.language.exceptions import YaqlException
 
-from taro import WarningEvent
-
 log = logging.getLogger(__name__)
 
 engine = yaql.factory.YaqlFactory().create()
@@ -35,12 +33,12 @@ def create_topics_provider_states(rules):
 
 
 def create_topics_provider_warnings(rules):
-    def create_topics(job, warning, event):
+    def create_topics(job, warning):
         if not rules:
             return ()
         ctx = yaql.create_context()
         _add_job_context(ctx, job)
-        _add_warning_context(ctx, warning, event)
+        _add_warning_context(ctx, warning)
         return get_topics(rules, ctx)
 
     return create_topics
@@ -53,12 +51,8 @@ def _add_job_context(ctx, job):
     ctx['state_groups'] = [group.name for group in job.state.groups]
 
 
-def _add_warning_context(ctx, warning, event: WarningEvent):
-    ctx['warning_id'] = warning.id
-    ctx['event'] = event.name
-    ctx['new_warning'] = event == WarningEvent.NEW_WARNING
-    ctx['warning_updated'] = event == WarningEvent.WARNING_UPDATED
-    ctx['warning_removed'] = event == WarningEvent.WARNING_REMOVED
+def _add_warning_context(ctx, warning):
+    ctx['warning_name'] = warning.name
 
 
 def get_topics(rules, ctx):
