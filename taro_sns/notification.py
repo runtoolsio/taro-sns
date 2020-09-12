@@ -4,7 +4,7 @@ import textwrap
 import boto3
 
 import taro
-from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn
+from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn, WarnEventCtx
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ def _create_job_section(job: JobInfo, *, always_exec_time: bool):
     if job.state.is_terminal() or always_exec_time:
         s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time())
     if job.warnings:
-        s += "\nWarnings: " + ",".join((w.id for w in job.warnings))
+        s += "\nWarnings: " + ",".join((name + ": " + str(count) for name, count in job.warnings.items()))
     return s
 
 
@@ -88,12 +88,12 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
 
         notify(topics, subject, _generate(*sections))
 
-    def new_warning(self, job_info: JobInfo, warning: Warn):
-        topics = self.topics_provider_warnings(job_info, warning)
+    def new_warning(self, job_info: JobInfo, warning: Warn, event_ctx: WarnEventCtx):
+        topics = self.topics_provider_warnings(job_info, warning, event_ctx)
         if not topics:
             return
 
-        subject = "!New warning {} for job instance {}@{}!".format(warning.id, job_info.job_id, job_info.instance_id)
+        subject = "!New warning {} for {}@{}!".format(warning.name, job_info.job_id, job_info.instance_id)
         sections = [_create_job_section(job_info, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
 
         notify(topics, subject, _generate(*sections))

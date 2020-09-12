@@ -33,12 +33,12 @@ def create_topics_provider_states(rules):
 
 
 def create_topics_provider_warnings(rules):
-    def create_topics(job, warning):
+    def create_topics(job, warning, event_ctx):
         if not rules:
             return ()
         ctx = yaql.create_context()
         _add_job_context(ctx, job)
-        _add_warning_context(ctx, warning)
+        _add_warning_context(ctx, warning, event_ctx)
         return get_topics(rules, ctx)
 
     return create_topics
@@ -51,8 +51,9 @@ def _add_job_context(ctx, job):
     ctx['state_groups'] = [group.name for group in job.state.groups]
 
 
-def _add_warning_context(ctx, warning):
-    ctx['warning_name'] = warning.name
+def _add_warning_context(ctx, warning, event_ctx):
+    ctx['warning'] = warning.name
+    ctx['count'] = event_ctx.count
 
 
 def get_topics(rules, ctx):
