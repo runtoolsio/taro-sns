@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 
 def read_validate_rules() -> NestedNamespace:
     try:
-        rules_path = taro.lookup_config_file_path(RULES_FILE)
+        rules_path = taro.lookup_file_in_config_path(RULES_FILE)
     except FileNotFoundError as e:
         raise PluginDisabledError('Rules file lookup failed -> ' + str(e)) from e
     rules_config = taro.util.read_yaml_file(rules_path)
