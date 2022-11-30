@@ -5,10 +5,10 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="taro-sns",
-    version="0.0.8",
+    version="0.0.9",
     author="Stan Svec",
-    author_email="stan.x.svec@gmail.com",
-    description="Plugin allowing to send SNS messages on job state changes",
+    author_email="dev@stansvec.com",
+    description="Plugin allowing to send SNS messages on job events",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/StanSvec/taro_sns",
@@ -21,7 +21,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: POSIX :: Linux",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     packages=setuptools.find_packages(include=("taro_sns",), exclude=("test",)),
     install_requires=[
         "boto3>=1.12.39",

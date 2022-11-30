@@ -29,11 +29,11 @@ def _create_job_section(job: JobInfo, *, always_exec_time: bool):
     s = _header("Job Detail")
     s += "\nJob: " + job.job_id
     s += "\nInstance: " + job.instance_id
-    s += "\nExecuted: " + str(job.lifecycle.execution_started())
+    s += "\nExecuted: " + str(job.lifecycle.execution_started)
     s += "\nState: " + job.state.name
-    s += "\nState changed: " + str(job.lifecycle.last_changed())
+    s += "\nState changed: " + str(job.lifecycle.last_changed)
     if job.state.is_terminal() or always_exec_time:
-        s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time())
+        s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time)
     if job.warnings:
         s += "\nWarnings: " + ",".join((name + ": " + str(count) for name, count in job.warnings.items()))
     return s
@@ -73,7 +73,7 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
         if not topics:
             return
 
-        states = job.lifecycle.states()
+        states = job.lifecycle.states
         prev_state = states[-2] if len(states) > 1 else ExecutionState.NONE
         cur_state = states[-1]
 

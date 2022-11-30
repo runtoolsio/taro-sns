@@ -10,7 +10,7 @@ import taro
 from taro import PluginBase, PluginDisabledError, JobInstance, HostinfoError, NestedNamespace
 from taro_sns import rules
 
-RULES_FILE = 'taro_sns_rules.yaml'
+RULES_FILE = 'sns_rules.yaml'
 
 log = logging.getLogger(__name__)
 
