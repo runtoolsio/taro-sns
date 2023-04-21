@@ -29,9 +29,9 @@ def _create_job_section(job: JobInfo, *, always_exec_time: bool):
     s = _header("Job Detail")
     s += "\nJob: " + job.job_id
     s += "\nInstance: " + job.instance_id
-    s += "\nExecuted: " + str(job.lifecycle.execution_started)
+    s += "\nExecuted: " + str(job.lifecycle.execution_started_at)
     s += "\nState: " + job.state.name
-    s += "\nState changed: " + str(job.lifecycle.last_changed)
+    s += "\nState changed: " + str(job.lifecycle.last_changed_at)
     if job.state.is_terminal() or always_exec_time:
         s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time)
     if job.warnings:
