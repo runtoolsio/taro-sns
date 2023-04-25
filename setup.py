@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="taro-sns",
-    version="0.0.9",
+    version="0.0.10",
     author="Stan Svec",
     author_email="dev@stansvec.com",
     description="Plugin allowing to send SNS messages on job events",

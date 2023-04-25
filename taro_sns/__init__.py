@@ -4,10 +4,10 @@ Each plugin module name must start with 'taro_' prefix.
 """
 import logging
 
-import taro.util
-from taro_sns import rules
 import taro
+import taro.util
 from taro import PluginBase, PluginDisabledError, JobInstance, HostinfoError, NestedNamespace
+from taro_sns import rules
 from taro_sns import rules
 
 RULES_FILE = 'sns_rules.yaml'
@@ -21,7 +21,7 @@ def read_validate_rules() -> NestedNamespace:
     except FileNotFoundError as e:
         raise PluginDisabledError('Rules file lookup failed -> ' + str(e)) from e
     rules_config = taro.util.read_yaml_file(rules_path)
-    if not rules_config or (not hasattr(rules_config, 'states') or not hasattr(rules_config, 'warnings')):
+    if not rules_config or (not hasattr(rules_config, 'states') and not hasattr(rules_config, 'warnings')):
         raise PluginDisabledError('Rules file must contain "states" and/or "warnings" sections')
     try:
         rules.validate_rules(rules_config.get('states', ()))

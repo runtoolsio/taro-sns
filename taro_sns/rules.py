@@ -1,4 +1,5 @@
 import logging
+import time
 
 import yaql
 from yaql.language.exceptions import YaqlException
@@ -51,9 +52,17 @@ def _add_job_context(ctx, job):
     ctx['state_groups'] = [group.name for group in job.state.groups]
 
 
+warning_to_last_time = {}
+
+
 def _add_warning_context(ctx, warning, event_ctx):
     ctx['warning'] = warning.name
     ctx['count'] = event_ctx.count
+
+    last_warn_time = warning_to_last_time.get(warning.name)
+    now = time.time()
+    ctx['last_warn_sec_ago'] = (now - last_warn_time) if last_warn_time else float('inf')
+    warning_to_last_time[warning.name] = now
 
 
 def get_topics(rules, ctx):
