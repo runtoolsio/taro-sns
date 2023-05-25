@@ -4,6 +4,8 @@ import time
 import yaql
 from yaql.language.exceptions import YaqlException
 
+from taro import Flag
+
 log = logging.getLogger(__name__)
 
 engine = yaql.factory.YaqlFactory().create()
@@ -48,8 +50,9 @@ def create_topics_provider_warnings(rules):
 def _add_job_context(ctx, job):
     ctx['job_id'] = job.job_id
     ctx['state'] = job.state.name
-    ctx['failure'] = job.state.is_failure()
-    ctx['state_groups'] = [group.name for group in job.state.groups]
+    ctx['phase'] = job.state.phase.name
+    ctx['state_flags'] = [flag.name for flag in job.state.flags]
+    ctx['failure'] = job.state.has_flag(Flag.FAILURE)
 
 
 warning_to_last_time = {}

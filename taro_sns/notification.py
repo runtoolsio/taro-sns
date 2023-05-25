@@ -5,6 +5,7 @@ import boto3
 
 import taro
 from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn, WarnEventCtx
+from taro.jobs.execution import ExecutionPhase, Flag
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ def _create_job_section(job: JobInfo, *, always_exec_time: bool):
     s += "\nExecuted: " + str(job.lifecycle.executed_at)
     s += "\nState: " + job.state.name
     s += "\nState changed: " + str(job.lifecycle.last_changed_at)
-    if job.state.is_terminal() or always_exec_time:
+    if job.state.in_phase(ExecutionPhase.TERMINAL) or always_exec_time:
         s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time)
     if job.warnings:
         s += "\nWarnings: " + ",".join((name + ": " + str(count) for name, count in job.warnings.items()))
@@ -80,7 +81,7 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
         subject = "Job {} changed state from {} to {}".format(job.job_id, prev_state.name, cur_state.name)
         sections = [_create_job_section(job, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
 
-        if cur_state.is_failure():
+        if cur_state.has_flag(Flag.FAILURE):
             sections.append(_create_error_section(job, job.exec_error))
             subject += "!"
         if job.warnings:
