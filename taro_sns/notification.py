@@ -4,7 +4,7 @@ import textwrap
 import boto3
 
 import taro
-from taro import ExecutionState, ExecutionStateObserver, JobInfo, ExecutionError, WarningObserver, Warn, WarnEventCtx
+from taro import ExecutionState, ExecutionStateObserver, JobInst, ExecutionError, WarningObserver, Warn, WarnEventCtx
 from taro.jobs.execution import ExecutionPhase, Flag
 
 log = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def _header(header_text):
     return header_text + "\n" + "-" * len(header_text)
 
 
-def _create_job_section(job: JobInfo, *, always_exec_time: bool):
+def _create_job_section(job: JobInst, *, always_exec_time: bool):
     s = _header("Job Detail")
     s += "\nJob: " + job.job_id
     s += "\nInstance: " + job.instance_id
@@ -49,7 +49,7 @@ def _create_hostinfo_section(host_info):
     return s
 
 
-def _create_error_section(job: JobInfo, exec_error: ExecutionError):
+def _create_error_section(job: JobInst, exec_error: ExecutionError):
     s = _header("Error Detail")
     s += "\nReason: " + str(exec_error)
     if job.status:
@@ -69,7 +69,7 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
         self.topics_provider_warnings = topics_provider_warnings
         self.hostinfo = hostinfo
 
-    def state_update(self, job: JobInfo):
+    def state_update(self, job: JobInst):
         topics = self.topics_provider_states(job)
         if not topics:
             return
@@ -89,7 +89,7 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
 
         notify(topics, subject, _generate(*sections))
 
-    def new_warning(self, job_info: JobInfo, warning: Warn, event_ctx: WarnEventCtx):
+    def new_warning(self, job_info: JobInst, warning: Warn, event_ctx: WarnEventCtx):
         topics = self.topics_provider_warnings(job_info, warning, event_ctx)
         if not topics:
             return
