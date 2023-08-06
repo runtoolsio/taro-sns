@@ -1,9 +1,7 @@
-import logging
-import textwrap
-
 import boto3
-
+import logging
 import taro
+import textwrap
 from taro import ExecutionState, ExecutionStateObserver, JobInst, ExecutionError, WarningObserver, Warn, WarnEventCtx
 from taro.jobs.execution import ExecutionPhase, Flag
 
@@ -69,22 +67,18 @@ class SnsNotification(ExecutionStateObserver, WarningObserver):
         self.topics_provider_warnings = topics_provider_warnings
         self.hostinfo = hostinfo
 
-    def state_update(self, job: JobInst):
-        topics = self.topics_provider_states(job)
+    def state_update(self, job_inst: JobInst, prev_state, new_state, changed):
+        topics = self.topics_provider_states(job_inst)
         if not topics:
             return
 
-        states = job.lifecycle.states
-        prev_state = states[-2] if len(states) > 1 else ExecutionState.NONE
-        cur_state = states[-1]
+        subject = "Job {} changed state from {} to {}".format(job_inst.job_id, prev_state.name, new_state.name)
+        sections = [_create_job_section(job_inst, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
 
-        subject = "Job {} changed state from {} to {}".format(job.job_id, prev_state.name, cur_state.name)
-        sections = [_create_job_section(job, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
-
-        if cur_state.has_flag(Flag.FAILURE):
-            sections.append(_create_error_section(job, job.exec_error))
+        if new_state.has_flag(Flag.FAILURE):
+            sections.append(_create_error_section(job_inst, job_inst.exec_error))
             subject += "!"
-        if job.warnings:
+        if job_inst.warnings:
             subject += " with warnings!"
 
         notify(topics, subject, _generate(*sections))
