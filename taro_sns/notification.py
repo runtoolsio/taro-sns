@@ -2,7 +2,7 @@ import boto3
 import logging
 import taro
 import textwrap
-from taro import ExecutionState, ExecutionStateObserver, JobInst, ExecutionError, WarningObserver, Warn, WarnEventCtx
+from taro import ExecutionState, InstanceStateObserver, JobInst, ExecutionError, WarningObserver, Warn, WarnEventCtx
 from taro.jobs.execution import ExecutionPhase, Flag
 
 log = logging.getLogger(__name__)
@@ -60,14 +60,14 @@ def _create_error_section(job: JobInst, exec_error: ExecutionError):
     return s
 
 
-class SnsNotification(ExecutionStateObserver, WarningObserver):
+class SnsNotification(InstanceStateObserver, WarningObserver):
 
     def __init__(self, topics_provider_states, topics_provider_warnings, hostinfo):
         self.topics_provider_states = topics_provider_states
         self.topics_provider_warnings = topics_provider_warnings
         self.hostinfo = hostinfo
 
-    def state_update(self, job_inst: JobInst, prev_state, new_state, changed):
+    def instance_state_update(self, job_inst: JobInst, prev_state, new_state, changed):
         topics = self.topics_provider_states(job_inst)
         if not topics:
             return
