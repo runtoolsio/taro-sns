@@ -2,7 +2,7 @@ import boto3
 import logging
 import taro
 import textwrap
-from taro import ExecutionState, InstanceStateObserver, JobInst, ExecutionError, WarningObserver, Warn, WarnEventCtx
+from taro import ExecutionState, InstanceStateObserver, JobInst, ExecutionError, Warn, WarnEventCtx
 from taro.jobs.execution import ExecutionPhase, Flag
 
 log = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ def _create_error_section(job: JobInst, exec_error: ExecutionError):
     return s
 
 
-class SnsNotification(InstanceStateObserver, WarningObserver):
+class SnsNotification(InstanceStateObserver, InstanceWarningObserver):
 
     def __init__(self, topics_provider_states, topics_provider_warnings, hostinfo):
         self.topics_provider_states = topics_provider_states
@@ -83,12 +83,12 @@ class SnsNotification(InstanceStateObserver, WarningObserver):
 
         notify(topics, subject, _generate(*sections))
 
-    def new_warning(self, job_info: JobInst, warning: Warn, event_ctx: WarnEventCtx):
-        topics = self.topics_provider_warnings(job_info, warning, event_ctx)
+    def new_warning(self, job_inst: JobInst, warn_ctx: WarnEventCtx):
+        topics = self.topics_provider_warnings(job_inst, warn_ctx.warning, warn_ctx)
         if not topics:
             return
 
-        subject = "!New warning {} for {}@{}!".format(warning.name, job_info.job_id, job_info.instance_id)
-        sections = [_create_job_section(job_info, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
+        subject = "!New warning {} for {}@{}!".format(warn_ctx.warning.name, job_inst.job_id, job_inst.instance_id)
+        sections = [_create_job_section(job_inst, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
 
         notify(topics, subject, _generate(*sections))
