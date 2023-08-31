@@ -4,11 +4,11 @@ Each plugin module name must start with 'taro_' prefix.
 """
 import logging
 
-import taro
-import taro.util
-from taro import PluginBase, PluginDisabledError, JobInstance, HostinfoError, NestedNamespace
+import tarotools.taro.util
 from taro_sns import rules
 from taro_sns import rules
+from tarotools import taro
+from tarotools.taro import PluginBase, PluginDisabledError, JobInstance, HostinfoError, NestedNamespace
 
 RULES_FILE = 'sns_rules.yaml'
 
@@ -58,7 +58,11 @@ class SnsPlugin(PluginBase):
                 rules.create_topics_provider_warnings(validated_rules.get('warnings')),
                 host_info)
 
-    def new_job_instance(self, job_instance: JobInstance):
-        # self.sns_notification.state_update(job_instance.create_info())  # Notify job created
+    def register_instance(self, job_instance):
+        # self.sns_notification.state_update(job_instance.create_info())  # TODO Notify job created?
         job_instance.add_state_observer(self.sns_notification)
         job_instance.add_warning_observer(self.sns_notification)
+
+    def unregister_instance(self, job_instance):
+        job_instance.remove_state_observer(self.sns_notification)
+        job_instance.remove_warning_observer(self.sns_notification)
