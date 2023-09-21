@@ -8,7 +8,7 @@ import tarotools.taro.util
 from taro_sns import rules
 from taro_sns import rules
 from tarotools import taro
-from tarotools.taro import PluginBase, PluginDisabledError, JobInstance, HostinfoError, NestedNamespace
+from tarotools.taro import Plugin, PluginDisabledError, JobInstance, HostinfoError, NestedNamespace
 
 RULES_FILE = 'sns_rules.yaml'
 
@@ -39,7 +39,7 @@ def disable_boto3_logging():
     logging.getLogger('urllib3.connectionpool').setLevel(logging.WARNING)
 
 
-class SnsPlugin(PluginBase):
+class SnsPlugin(Plugin):
 
     def __init__(self):
         disable_boto3_logging()
