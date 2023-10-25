@@ -30,7 +30,7 @@ def _create_job_section(job: JobInst, *, always_exec_time: bool):
     s += "\nInstance: " + job.instance_id
     s += "\nExecuted: " + str(job.lifecycle.executed_at)
     s += "\nState: " + job.phase.name
-    s += "\nState changed: " + str(job.lifecycle.last_changed_at)
+    s += "\nState changed: " + str(job.lifecycle.last_transition_at)
     if job.phase.in_phase(ExecutionPhase.TERMINAL) or always_exec_time:
         s += "\nExecution Time: " + taro.format_timedelta(job.lifecycle.execution_time)
     if job.warnings:
