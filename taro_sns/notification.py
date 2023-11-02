@@ -76,7 +76,7 @@ class SnsNotification(InstanceStateObserver, InstanceWarningObserver):
         sections = [_create_job_section(job_inst, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
 
         if new_state.has_flag(Flag.FAILURE):
-            sections.append(_create_error_section(job_inst, job_inst.exec_error))
+            sections.append(_create_error_section(job_inst, job_inst.run_error))
             subject += "!"
         if job_inst.warnings:
             subject += " with warnings!"
