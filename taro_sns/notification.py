@@ -27,7 +27,7 @@ def _header(header_text):
 def _create_job_section(job: JobInst, *, always_exec_time: bool):
     s = _header("Job Detail")
     s += "\nJob: " + job.job_id
-    s += "\nInstance: " + job.instance_id
+    s += "\nInstance: " + job.run_id
     s += "\nExecuted: " + str(job.lifecycle.executed_at)
     s += "\nState: " + job.phase.name
     s += "\nState changed: " + str(job.lifecycle.last_transition_at)
@@ -88,7 +88,7 @@ class SnsNotification(InstanceStateObserver, InstanceWarningObserver):
         if not topics:
             return
 
-        subject = "!New warning {} for {}@{}!".format(warn_ctx.warning.name, job_inst.job_id, job_inst.instance_id)
+        subject = "!New warning {} for {}@{}!".format(warn_ctx.warning.name, job_inst.job_id, job_inst.run_id)
         sections = [_create_job_section(job_inst, always_exec_time=True), _create_hostinfo_section(self.hostinfo)]
 
         notify(topics, subject, _generate(*sections))
