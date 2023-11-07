@@ -60,9 +60,9 @@ class SnsPlugin(Plugin):
 
     def register_instance(self, job_instance):
         # self.sns_notification.state_update(job_instance.create_info())  # TODO Notify job created?
-        job_instance.add_transition_callback(self.sns_notification)
+        job_instance.add_observer_phase_transition(self.sns_notification)
         job_instance.add_warning_callback(self.sns_notification)
 
     def unregister_instance(self, job_instance):
-        job_instance.remove_transition_callback(self.sns_notification)
+        job_instance.remove_observer_phase_transition(self.sns_notification)
         job_instance.remove_warning_callback(self.sns_notification)
