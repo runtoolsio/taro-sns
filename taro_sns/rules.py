@@ -50,7 +50,7 @@ def _add_job_context(ctx, job):
     ctx['state'] = job.phase.name
     ctx['phase'] = job.phase.phase.name
     ctx['state_flags'] = [flag.name for flag in job.phase.flags]
-    ctx['failure'] = job.phase.has_flag(Flag.FAILURE)
+    ctx['failure'] = job.phase.has_flag(Flag.FAULT)
 
 
 warning_to_last_time = {}

@@ -75,7 +75,7 @@ class SnsNotification(InstanceStateObserver, InstanceWarningObserver):
         subject = "Job {} changed state from {} to {}".format(job_inst.job_id, prev_state.name, new_state.name)
         sections = [_create_job_section(job_inst, always_exec_time=False), _create_hostinfo_section(self.hostinfo)]
 
-        if new_state.has_flag(Flag.FAILURE):
+        if new_state.has_flag(Flag.FAULT):
             sections.append(_create_error_section(job_inst, job_inst.run_error))
             subject += "!"
         if job_inst.warnings:
